@@ -1,6 +1,7 @@
 package pl.filipiak.jakub.training.springtestcontainers.services;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import pl.filipiak.jakub.training.springtestcontainers.models.Person;
 import pl.filipiak.jakub.training.springtestcontainers.repositories.PersonRepository;
 import pl.filipiak.jakub.training.springtestcontainers.assemblers.PersonAssembler;
@@ -13,6 +14,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class PersonServiceImpl implements PersonService {
 
     private PersonRepository personRepository;
@@ -50,10 +52,9 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public PersonDto updatePerson(PersonDto dto) {
-        Optional<Person> personOpt = personRepository.findById(dto.getId());
-        if (personOpt.isPresent()) {
-            Person personForUpdate = personAssembler.entityFromEditDto(dto);
-            Person personUpdated = personRepository.save(personForUpdate);
+        if (personRepository.existsById(dto.getId())) {
+            Person personToUpdate = personAssembler.entityFromEditDto(dto);
+            Person personUpdated = personRepository.save(personToUpdate);
             return personAssembler.dtoFromEntity(personUpdated);
         }
         throw new ResourceNotFoundException(dto.getId());
@@ -61,8 +62,7 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public void deletePersonById(long id) {
-        Optional<Person> personOpt = personRepository.findById(id);
-        if (personOpt.isPresent()) {
+        if (personRepository.existsById(id)) {
             personRepository.deleteById(id);
             return;
         }
